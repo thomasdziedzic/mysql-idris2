@@ -3,8 +3,8 @@ package mysql
 sourcedir = "src"
 
 modules =
-    Mysql
-    Mysql.Bindings
+    Mysql,
+    Mysql.Bindings,
     Support.Bindings
 
 prebuild = "make -C src/libidrismysql"
