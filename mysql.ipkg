@@ -1,0 +1,7 @@
+package mysql
+
+sourcedir = "src"
+
+prebuild = "make -C src/libidrismysql"
+postinstall = "make -C src/libidrismysql install"
+postclean = "make -C src/libidrismysql clean"

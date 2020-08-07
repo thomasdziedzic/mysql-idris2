@@ -1,4 +1,4 @@
-module Support
+module Support.Bindings
 
 libidrismysql : String -> String
 libidrismysql fn = "C:" ++ fn ++ ",libidrismysql"
