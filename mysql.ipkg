@@ -2,6 +2,11 @@ package mysql
 
 sourcedir = "src"
 
+modules =
+    Mysql
+    Mysql.Bindings
+    Support.Bindings
+
 prebuild = "make -C src/libidrismysql"
 postinstall = "make -C src/libidrismysql install"
 postclean = "make -C src/libidrismysql clean"
