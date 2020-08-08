@@ -1,7 +1,5 @@
 package mysql-test
 
-opts = "-p mysql"
-
 sourcedir = "test"
 
 depends = mysql
