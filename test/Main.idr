@@ -1,5 +1,5 @@
-import Mysql
-import Support
+import Mysql.Bindings
+import Support.Bindings
 
 main : IO ()
 main = do

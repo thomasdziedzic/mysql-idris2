@@ -1,0 +1,11 @@
+package mysql-test
+
+opts = "-p mysql"
+
+sourcedir = "test"
+
+depends = mysql
+
+main = Main
+
+executable = mysql-test
