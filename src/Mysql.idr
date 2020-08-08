@@ -24,6 +24,7 @@ interface MysqlI e where
           (query : String) ->
           App e (Either String String)
 
+export
 Has [PrimIO] e => MysqlI e where
   connect host username password database port = do
     -- the first primIO is for the Control.App PrimIO interface, the second is to lift it from a PrimIO type to HasIO io
