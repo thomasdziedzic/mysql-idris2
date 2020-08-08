@@ -4,7 +4,7 @@ all:
 	idris2 --build mysql.ipkg
 	idris2 --build mysql-test.ipkg
 
-test:
+test: install
 	build/exec/mysql-test
 
 install:
