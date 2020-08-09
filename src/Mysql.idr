@@ -2,6 +2,7 @@ module Mysql
 
 import Control.App
 
+import public Mysql.Types
 import Mysql.Wrapper
 
 export
@@ -29,7 +30,7 @@ Has [PrimIO] e => MysqlI e where
 
   disconnect client = primIO $ mysqlClose client
 
-  query client@(MkClient mysql) q = do
+  query client q = do
     Right () <- primIO $ mysqlQuery client q
         | Left err => pure $ Left err
     Right (resultCount ** result) <- primIO $ mysqlStoreResult client

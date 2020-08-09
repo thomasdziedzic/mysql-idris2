@@ -1,39 +1,8 @@
 module Mysql.Wrapper
 
 import Mysql.Bindings
+import Mysql.Types
 import Support.Bindings
-
-public
-export
-data Status = Disconnected | Connected
-
--- TODO remove public from Client once Mysql.idr is converted to using the wrapper only
-public
-export
-data Client : Status -> Type where
-  MkClient : AnyPtr -> Client status
-
-public
-export
-data MysqlError = OutOfMemory
-                | MkMysqlError Bits32 String
-
-public
-export
-data ResultCount = None
-                 | Many
-
-data Result : ResultCount -> Type where
-  NoResults : Result None
-  SomeResults : AnyPtr -> Result Many
-
-export
-data Row = MkRow AnyPtr
-
-export
-Show MysqlError where
-  show OutOfMemory = "Mysql Error: Out of memory"
-  show (MkMysqlError errno error) = "Mysql Error: (" ++ show errno ++ ") " ++ error
 
 export
 mysqlInit : HasIO io => io (Either MysqlError (Client Disconnected))
