@@ -47,3 +47,13 @@ mysql_free_result : AnyPtr -> PrimIO ()
 %foreign (libmysqlclient "mysql_close")
 export
 mysql_close : AnyPtr -> PrimIO ()
+
+-- unsigned int mysql_errno(MYSQL *mysql)
+%foreign (libmysqlclient "mysql_errno")
+export
+mysql_errno : AnyPtr -> PrimIO Bits32
+
+-- const char *mysql_error(MYSQL *mysql)
+%foreign (libmysqlclient "mysql_error")
+export
+mysql_error : AnyPtr -> PrimIO String

@@ -11,7 +11,7 @@ selectTest = do
       database = "tom"
       port = 3306
   Right client <- connect host username password database port
-        | Left err => putStrLn err
+        | Left err => putStrLn $ show err
   res <- query client "select 42"
   putStrLn $ show res
   disconnect client

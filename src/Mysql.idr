@@ -10,6 +10,13 @@ data Status = Disconnected | Connected
 data Client : Status -> Type where
   MkClient : AnyPtr -> Client status
 
+data MysqlError =
+  MkMysqlError Bits32 String
+
+export
+Show MysqlError where
+  show (MkMysqlError errno error) = "Mysql Error: (" ++ show errno ++ ") " ++ error
+
 export
 interface MysqlI e where
   connect : (host : String) ->
@@ -17,7 +24,7 @@ interface MysqlI e where
             (password : String) ->
             (database : String) ->
             (port : Bits32) ->
-            App e (Either String (Client Connected))
+            App e (Either MysqlError (Client Connected))
   disconnect : (client : Client Connected) ->
                App e ()
   query : (client : Client Connected) ->
@@ -33,7 +40,10 @@ Has [PrimIO] e => MysqlI e where
         client_flag = 0
     mysql' <- primIO $ primIO $ mysql_real_connect mysql host username password database port unix_socket client_flag
     if prim__nullAnyPtr mysql' == 1
-       then pure (Left "Error connecting, TODO get message from mysql") -- TODO mysql' is a null pointer, we got an error, how do we fetch the error?
+       then do
+         errno <- primIO $ primIO $ mysql_errno mysql
+         error <- primIO $ primIO $ mysql_error mysql
+         pure (Left (MkMysqlError errno error))
        else pure (Right (MkClient mysql))
 
   disconnect (MkClient mysql) = primIO $ primIO $ mysql_close mysql
