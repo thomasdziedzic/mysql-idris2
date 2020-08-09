@@ -2,20 +2,7 @@ module Mysql
 
 import Control.App
 
-import Mysql.Bindings
-import Support.Bindings
-
-data Status = Disconnected | Connected
-
-data Client : Status -> Type where
-  MkClient : AnyPtr -> Client status
-
-data MysqlError =
-  MkMysqlError Bits32 String
-
-export
-Show MysqlError where
-  show (MkMysqlError errno error) = "Mysql Error: (" ++ show errno ++ ") " ++ error
+import Mysql.Wrapper
 
 export
 interface MysqlI e where
@@ -29,40 +16,36 @@ interface MysqlI e where
                App e ()
   query : (client : Client Connected) ->
           (query : String) ->
-          App e (Either String String)
+          App e (Either MysqlError (Maybe String))
 
 export
 Has [PrimIO] e => MysqlI e where
   connect host username password database port = do
-    -- the first primIO is for the Control.App PrimIO interface, the second is to lift it from a PrimIO type to HasIO io
-    mysql <- primIO $ primIO $ mysql_init prim__getNullAnyPtr
-    let unix_socket = prim__castPtr prim__getNullAnyPtr
-        client_flag = 0
-    mysql' <- primIO $ primIO $ mysql_real_connect mysql host username password database port unix_socket client_flag
-    if prim__nullAnyPtr mysql' == 1
-       then do
-         errno <- primIO $ primIO $ mysql_errno mysql
-         error <- primIO $ primIO $ mysql_error mysql
-         pure (Left (MkMysqlError errno error))
-       else pure (Right (MkClient mysql))
+    Right disconnectedClient <- primIO mysqlInit
+        | Left err => pure $ Left err
+    Right client <- primIO $ mysqlRealConnect disconnectedClient host username password database port
+        | Left err => pure $ Left err
+    pure $ Right client
 
-  disconnect (MkClient mysql) = primIO $ primIO $ mysql_close mysql
+  disconnect client = primIO $ mysqlClose client
 
-  query (MkClient mysql) q = do
-    ret <- primIO $ primIO $ mysql_query mysql q
-    if ret == 0
-       then pure () -- success
-       else pure () -- failure
-
-    result <- primIO $ primIO $ mysql_store_result mysql
-
-    numFields <- primIO $ primIO $ mysql_num_fields result
-
-    row <- primIO $ primIO $ mysql_fetch_row result
-
-    if prim__nullAnyPtr row == 1
-       then pure (Left "row is a null pointer, not printing out the row")
-       else do
-         value <- primIO $ primIO $ get_column row 0
-         primIO $ primIO $ mysql_free_result result
-         pure (Right value)
+  query client@(MkClient mysql) q = do
+    Right () <- primIO $ mysqlQuery client q
+        | Left err => pure $ Left err
+    Right (resultCount ** result) <- primIO $ mysqlStoreResult client
+        | Left err => pure $ Left err
+    case resultCount of
+         None => do
+           primIO $ putStrLn "Got no results so not printing anything"
+           pure $ Right Nothing
+         Many => do
+           row <- primIO $ mysqlFetchRow client result
+           case row of
+                Left err => pure $ Left err
+                Right Nothing => do
+                  primIO $ putStrLn "Got many results but fetch row returned nothing, I don't think this should happen"
+                  pure $ Right Nothing
+                Right (Just row) => do
+                  firstColumn <- primIO $ getColumn row 0
+                  primIO $ mysqlFreeResult result
+                  pure $ Right $ Just firstColumn
