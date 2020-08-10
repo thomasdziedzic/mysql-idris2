@@ -34,7 +34,7 @@ mysqlRealConnect (MkClient mysql) host username password database port = do
        else pure (Right (MkClient mysql))
   where
     cast16to32 : Bits16 -> Bits32
-    cast16to32 x = the Bits32 (fromInteger (prim__cast_Bits16Integer x))
+    cast16to32 x = fromInteger (prim__cast_Bits16Integer x)
 
 export
 mysqlQuery : HasIO io => (client : Client Connected) -> (q : String) -> io (Either MysqlError ())
