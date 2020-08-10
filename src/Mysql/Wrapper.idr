@@ -4,6 +4,8 @@ import Mysql.Bindings
 import Mysql.Types
 import Support.Bindings
 
+import Data.Vect
+
 export
 mysqlInit : HasIO io => io (Either MysqlError (Client Disconnected))
 mysqlInit = do
@@ -62,8 +64,13 @@ mysqlStoreResult (MkClient mysql) = do
      else pure $ Right $ (Many ** SomeResults result)
 
 export
-mysqlNumFields : HasIO io => Result Many -> io Bits32
-mysqlNumFields (SomeResults result) = primIO $ mysql_num_fields result
+mysqlNumFields : HasIO io => Result Many -> io Nat
+mysqlNumFields (SomeResults result) = do
+  cols <- primIO $ mysql_num_fields result
+  pure $ castBits32ToNat cols
+  where
+    castBits32ToNat : Bits32 -> Nat
+    castBits32ToNat x = fromInteger (prim__cast_Bits32Integer x)
 
 export
 mysqlFetchRow : HasIO io => (client : Client Connected) -> Result Many -> io (Either MysqlError (Maybe Row))
@@ -85,8 +92,29 @@ mysqlFetchLengths : HasIO io => Result Many -> io (List Bits64)
 -- TODO what if index is out of bounds?
 -- TODO does getColumn belong in this file or should we move it to a Support.Wrapper module?
 export
-getColumn : HasIO io => Row -> Bits32 -> io (String)
-getColumn (MkRow row) index = primIO $ get_column row index
+getColumn : HasIO io => Row -> Nat -> io String
+getColumn (MkRow row) index = primIO $ get_column row (castNatTo32 index)
+  where
+    toIntegerNat : Nat -> Integer
+    toIntegerNat Z = 0
+    toIntegerNat (S k) = 1 + toIntegerNat k
+
+    -- TODO This might be unsafe if we ever represent a Nat larger than a Bits32
+    castNatTo32 : Nat -> Bits32
+    castNatTo32 n = fromInteger $ toIntegerNat n
+
+fetchOneReversed : HasIO io => (n : Nat) -> Row -> io (Vect n String)
+fetchOneReversed 0 _ = pure []
+fetchOneReversed (S k) row = do
+  val <- getColumn row k
+  rest <- fetchOneReversed k row
+  pure $ val :: rest
+
+export
+fetchOne : HasIO io => (n : Nat) -> Row -> io (Vect n String)
+fetchOne n row = do
+  reversedRow <- fetchOneReversed n row
+  pure $ reverse reversedRow
 
 -- TODO maybe we should have a withResult function replace the mysqlStoreResult and mysqlFreeResult so that we don't forget to free the pointer
 export

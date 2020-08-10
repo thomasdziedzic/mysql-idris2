@@ -5,8 +5,11 @@ import Control.App
 import public Mysql.Types
 import Mysql.Wrapper
 
+import Data.Vect
+
 export
 interface MysqlI e where
+  -- TODO move host username, password, database, port into a ConnectionInfo record
   connect : (host : String) ->
             (username : String) ->
             (password : String) ->
@@ -17,7 +20,10 @@ interface MysqlI e where
                App e ()
   query : (client : Client Connected) ->
           (query : String) ->
-          App e (Either MysqlError (Maybe String))
+          App e (Either MysqlError (Maybe (n ** Vect n String)))
+
+  -- TODO implement fetchOne
+  -- TODO implement fetchMany
 
 export
 Has [PrimIO] e => MysqlI e where
@@ -47,6 +53,8 @@ Has [PrimIO] e => MysqlI e where
                   primIO $ putStrLn "Got many results but fetch row returned nothing, I don't think this should happen"
                   pure $ Right Nothing
                 Right (Just row) => do
-                  firstColumn <- primIO $ getColumn row 0
+                  --firstColumn <- primIO $ getColumn row 0
+                  nCols <- primIO $ mysqlNumFields result
+                  fetchedRow <- primIO $ fetchOne nCols row
                   primIO $ mysqlFreeResult result
-                  pure $ Right $ Just firstColumn
+                  pure $ Right $ Just (nCols ** fetchedRow)
