@@ -11,7 +11,7 @@ interface MysqlI e where
             (username : String) ->
             (password : String) ->
             (database : String) ->
-            (port : Bits32) ->
+            (port : Bits16) ->
             App e (Either MysqlError (Client Connected))
   disconnect : (client : Client Connected) ->
                App e ()

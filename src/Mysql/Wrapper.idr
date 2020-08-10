@@ -19,18 +19,22 @@ mysqlRealConnect : HasIO io =>
                    (username : String) ->
                    (password : String) ->
                    (database : String) ->
-                   (port : Bits32) ->
+                   (port : Bits16) ->
                    io (Either MysqlError (Client Connected))
 mysqlRealConnect (MkClient mysql) host username password database port = do
     let unix_socket = prim__castPtr prim__getNullAnyPtr
         client_flag = 0
-    mysql' <- primIO $ mysql_real_connect mysql host username password database port unix_socket client_flag
+    -- cast port from 16 bits to 32 bits. Ports are 16 bits long, but the mysql c api uses a 32 bit unsigned integer
+    mysql' <- primIO $ mysql_real_connect mysql host username password database (cast16to32 port) unix_socket client_flag
     if prim__nullAnyPtr mysql' == 1
        then do
          errno <- primIO $ mysql_errno mysql
          error <- primIO $ mysql_error mysql
          pure (Left (MkMysqlError errno error))
        else pure (Right (MkClient mysql))
+  where
+    cast16to32 : Bits16 -> Bits32
+    cast16to32 x = the Bits32 (fromInteger (prim__cast_Bits16Integer x))
 
 export
 mysqlQuery : HasIO io => (client : Client Connected) -> (q : String) -> io (Either MysqlError ())
