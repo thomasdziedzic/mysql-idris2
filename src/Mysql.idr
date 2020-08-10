@@ -20,7 +20,7 @@ interface MysqlI e where
                App e ()
   query : (client : Client Connected) ->
           (query : String) ->
-          App e (Either MysqlError (Maybe (n ** Vect n String)))
+          App e (Either MysqlError (Maybe (nCols ** Vect nCols String)))
 
   -- TODO implement fetchOne
   -- TODO implement fetchMany
