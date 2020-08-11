@@ -48,6 +48,18 @@ mysql_free_result : AnyPtr -> PrimIO ()
 export
 mysql_close : AnyPtr -> PrimIO ()
 
+-- TODO this function is deprecated according to:
+-- https://dev.mysql.com/doc/c-api/8.0/en/mysql-server-end.html
+-- But when I tried to use mysql_library_end, I got an error when running a test:
+-- Exception in foreign-procedure: no entry for "mysql_library_end"
+-- After investigation, it indeed looks like the library I have installed libmysqlclient21 8.0.21-1ubuntu18.04
+-- does not have this symbol installed, verified with the following command which returns no results:
+-- nm -gD /usr/lib/x86_64-linux-gnu/libmysqlclient.so.21 | grep mysql_library
+-- void mysql_server_end(void)
+%foreign (libmysqlclient "mysql_server_end")
+export
+mysql_server_end : PrimIO ()
+
 -- unsigned int mysql_errno(MYSQL *mysql)
 %foreign (libmysqlclient "mysql_errno")
 export

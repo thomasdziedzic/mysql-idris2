@@ -34,7 +34,9 @@ Has [PrimIO] e => MysqlI e where
         | Left err => pure $ Left err
     pure $ Right client
 
-  disconnect client = primIO $ mysqlClose client
+  disconnect client = do
+    primIO $ mysqlClose client
+    primIO $ mysqlServerEnd
 
   query client q = do
     Right () <- primIO $ mysqlQuery client q

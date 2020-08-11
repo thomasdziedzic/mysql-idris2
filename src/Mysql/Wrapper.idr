@@ -124,3 +124,7 @@ mysqlFreeResult (SomeResults result) = primIO $ mysql_free_result result
 export
 mysqlClose : HasIO io => (client : Client Connected) -> io ()
 mysqlClose (MkClient mysql) = primIO $ mysql_close mysql
+
+export
+mysqlServerEnd : HasIO io => io ()
+mysqlServerEnd = primIO $ mysql_server_end
