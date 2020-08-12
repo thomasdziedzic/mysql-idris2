@@ -9,7 +9,6 @@ import Data.Vect
 
 export
 interface MysqlI e where
-  -- TODO move host username, password, database, port into a ConnectionInfo record
   connect : ConnectionInfo ->
             App e (Either MysqlError (Client Connected))
   disconnect : (client : Client Connected) ->
