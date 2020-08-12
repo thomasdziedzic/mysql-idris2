@@ -27,3 +27,12 @@ data Result : ResultCount -> Type where
 
 public export
 data Row = MkRow AnyPtr
+
+public export
+record ConnectionInfo where
+  constructor MkConnectionInfo
+  host : String
+  username : String
+  password : String
+  database : String
+  port : Bits16

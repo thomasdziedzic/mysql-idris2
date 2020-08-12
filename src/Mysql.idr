@@ -10,11 +10,7 @@ import Data.Vect
 export
 interface MysqlI e where
   -- TODO move host username, password, database, port into a ConnectionInfo record
-  connect : (host : String) ->
-            (username : String) ->
-            (password : String) ->
-            (database : String) ->
-            (port : Bits16) ->
+  connect : ConnectionInfo ->
             App e (Either MysqlError (Client Connected))
   disconnect : (client : Client Connected) ->
                App e ()
@@ -27,10 +23,10 @@ interface MysqlI e where
 
 export
 Has [PrimIO] e => MysqlI e where
-  connect host username password database port = do
+  connect connectionInfo = do
     Right disconnectedClient <- primIO mysqlInit
         | Left err => pure $ Left err
-    Right client <- primIO $ mysqlRealConnect disconnectedClient host username password database port
+    Right client <- primIO $ mysqlRealConnect disconnectedClient connectionInfo
         | Left err => pure $ Left err
     pure $ Right client
 
