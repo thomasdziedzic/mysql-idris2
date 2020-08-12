@@ -1,7 +1,6 @@
 module Mysql.Types
 
-public
-export
+public export
 data MysqlError = OutOfMemory
                 | MkMysqlError Bits32 String
 
@@ -10,26 +9,21 @@ Show MysqlError where
   show OutOfMemory = "Mysql Error: Out of memory"
   show (MkMysqlError errno error) = "Mysql Error: (" ++ show errno ++ ") " ++ error
 
-public
-export
+public export
 data Status = Disconnected | Connected
 
-public
-export
+public export
 data Client : Status -> Type where
   MkClient : AnyPtr -> Client status
 
-public
-export
+public export
 data ResultCount = None
                  | Many
 
-public
-export
+public export
 data Result : ResultCount -> Type where
   NoResults : Result None
   SomeResults : AnyPtr -> Result Many
 
-public
-export
+public export
 data Row = MkRow AnyPtr
