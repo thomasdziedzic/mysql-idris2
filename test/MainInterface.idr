@@ -11,9 +11,10 @@ selectTest = do
       password = "tom123"
       database = "tom"
       port = 3306
-  Right client <- connect host username password database port
+      connectionInfo = MkConnectionInfo host username password database port
+  Right client <- connect connectionInfo
         | Left err => putStrLn $ show err
-  res <- query client "select 42, 21"
+  res <- fetchOne client "select 42, 21"
   putStrLn $ show res
   disconnect client
 
