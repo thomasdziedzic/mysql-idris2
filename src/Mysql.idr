@@ -18,8 +18,8 @@ interface MysqlI e where
              App e (Either MysqlError (Maybe (nCols ** Vect nCols String)))
   fetchMany : (client : Client Connected) ->
               (query : String) ->
-              (nRows : Nat) ->
-              App e (Either MysqlError (Maybe (nCols ** (Vect nRows (Vect nCols String)))))
+              (limit : Nat) ->
+              App e (Either MysqlError (Maybe (nRows ** (nCols ** (Vect nRows (Vect nCols String))))))
   fetchAll : (client : Client Connected) ->
              (query : String) ->
              App e (Either MysqlError (Maybe (nRows ** (nCols ** Vect nRows (Vect nCols String)))))
