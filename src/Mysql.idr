@@ -13,12 +13,16 @@ interface MysqlI e where
             App e (Either MysqlError (Client Connected))
   disconnect : (client : Client Connected) ->
                App e ()
-  query : (client : Client Connected) ->
-          (query : String) ->
-          App e (Either MysqlError (Maybe (nCols ** Vect nCols String)))
-
-  -- TODO implement fetchOne
-  -- TODO implement fetchMany
+  fetchOne : (client : Client Connected) ->
+             (query : String) ->
+             App e (Either MysqlError (Maybe (nCols ** Vect nCols String)))
+  fetchMany : (client : Client Connected) ->
+              (query : String) ->
+              (nRows : Nat) ->
+              App e (Either MysqlError (Maybe (nCols ** (Vect nRows (Vect nCols String)))))
+  fetchAll : (client : Client Connected) ->
+             (query : String) ->
+             App e (Either MysqlError (Maybe (nRows ** (nCols ** Vect nRows (Vect nCols String)))))
 
 export
 Has [PrimIO] e => MysqlI e where
@@ -33,25 +37,33 @@ Has [PrimIO] e => MysqlI e where
     primIO $ mysqlClose client
     primIO $ mysqlServerEnd
 
-  query client q = do
+  fetchOne client q = do
+    Right () <- primIO $ mysqlQuery client q
+        | Left err => pure $ Left err
+    Right (resultCount ** result) <- primIO $ mysqlStoreResult client
+        | Left err => pure $ Left err
+    case resultCount of
+         None => pure $ Right Nothing
+         Many => do
+           Right mRow <- primIO $ mysqlFetchRow client result
+               | Left err => pure $ Left err
+           case mRow of
+                Nothing => do
+                  pure $ Right Nothing
+                Just row => do
+                  nCols <- primIO $ mysqlNumFields result
+                  fetchedRow <- primIO $ fetchOne nCols row
+                  primIO $ mysqlFreeResult result
+                  pure $ Right $ Just (nCols ** fetchedRow)
+
+  fetchAll client q = do
     Right () <- primIO $ mysqlQuery client q
         | Left err => pure $ Left err
     Right (resultCount ** result) <- primIO $ mysqlStoreResult client
         | Left err => pure $ Left err
     case resultCount of
          None => do
-           primIO $ putStrLn "Got no results so not printing anything"
            pure $ Right Nothing
          Many => do
-           row <- primIO $ mysqlFetchRow client result
-           case row of
-                Left err => pure $ Left err
-                Right Nothing => do
-                  primIO $ putStrLn "Got many results but fetch row returned nothing, I don't think this should happen"
-                  pure $ Right Nothing
-                Right (Just row) => do
-                  --firstColumn <- primIO $ getColumn row 0
-                  nCols <- primIO $ mysqlNumFields result
-                  fetchedRow <- primIO $ fetchOne nCols row
-                  primIO $ mysqlFreeResult result
-                  pure $ Right $ Just (nCols ** fetchedRow)
+           rows <- primIO $ ?fetchAllHelper client result
+           pure $ Right $ Just rows
