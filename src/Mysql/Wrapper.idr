@@ -115,8 +115,8 @@ fetchOneReversed (S k) row = do
   pure $ val :: rest
 
 export
-fetchOne : HasIO io => (n : Nat) -> Row -> io (Vect n String)
-fetchOne n row = do
+fetchOneRow : HasIO io => (n : Nat) -> Row -> io (Vect n String)
+fetchOneRow n row = do
   reversedRow <- fetchOneReversed n row
   pure $ reverse reversedRow
 

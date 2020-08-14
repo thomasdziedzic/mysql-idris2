@@ -17,12 +17,30 @@ interface MysqlI e where
              (query : String) ->
              App e (Either MysqlError (Maybe (nCols ** Vect nCols String)))
   fetchMany : (client : Client Connected) ->
-              (query : String) ->
               (limit : Nat) ->
+              (query : String) ->
               App e (Either MysqlError (Maybe (nRows ** (nCols ** (Vect nRows (Vect nCols String))))))
   fetchAll : (client : Client Connected) ->
              (query : String) ->
              App e (Either MysqlError (Maybe (nRows ** (nCols ** Vect nRows (Vect nCols String)))))
+
+fetchHelper : HasIO io =>
+              {accRows : Nat} ->
+              (limit : Nat) ->
+              (nCols : Nat) ->
+              (client : Client Connected) ->
+              (result : Result Many) ->
+              (acc : Vect accRows (Vect nCols String)) ->
+              io (Either MysqlError (nRows ** (nCols ** (Vect nRows (Vect nCols String)))))
+fetchHelper {accRows} 0 nCols client result acc = pure $ Right (accRows ** (nCols ** acc))
+fetchHelper {accRows} (S k) nCols client result acc = do
+  Right mRow <- mysqlFetchRow client result
+    | Left err => pure $ Left err
+  case mRow of
+       Nothing => pure $ Right (accRows ** (nCols ** acc))
+       Just row => do
+         fetchedRow <- fetchOneRow nCols row
+         fetchHelper k nCols client result (fetchedRow :: acc)
 
 export
 Has [PrimIO] e => MysqlI e where
@@ -52,12 +70,24 @@ Has [PrimIO] e => MysqlI e where
                   pure $ Right Nothing
                 Just row => do
                   nCols <- primIO $ mysqlNumFields result
-                  fetchedRow <- primIO $ fetchOne nCols row
+                  fetchedRow <- primIO $ fetchOneRow nCols row
                   primIO $ mysqlFreeResult result
                   pure $ Right $ Just (nCols ** fetchedRow)
 
-  fetchMany client query limit = do
-    ?fetchMany_rhs
+  fetchMany client limit query = do
+    Right () <- primIO $ mysqlQuery client query
+        | Left err => pure $ Left err
+    Right (resultCount ** result) <- primIO $ mysqlStoreResult client
+        | Left err => pure $ Left err
+    case resultCount of
+         None => pure $ Right Nothing
+         Many => do
+           nCols <- primIO $ mysqlNumFields result
+           Right (nRows ** (nCols ** allRows)) <- primIO $ fetchHelper limit nCols client result []
+             | Left err => pure $ Left err
+           primIO $ mysqlFreeResult result
+           -- we need to reverse the fetchHelper results because it accumulates results using a vector
+           pure $ Right $ Just (nRows ** (nCols ** (reverse allRows)))
 
   fetchAll client query = do
     Right () <- primIO $ mysqlQuery client query
