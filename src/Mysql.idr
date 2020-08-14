@@ -37,8 +37,8 @@ Has [PrimIO] e => MysqlI e where
     primIO $ mysqlClose client
     primIO $ mysqlServerEnd
 
-  fetchOne client q = do
-    Right () <- primIO $ mysqlQuery client q
+  fetchOne client query = do
+    Right () <- primIO $ mysqlQuery client query
         | Left err => pure $ Left err
     Right (resultCount ** result) <- primIO $ mysqlStoreResult client
         | Left err => pure $ Left err
@@ -56,8 +56,11 @@ Has [PrimIO] e => MysqlI e where
                   primIO $ mysqlFreeResult result
                   pure $ Right $ Just (nCols ** fetchedRow)
 
-  fetchAll client q = do
-    Right () <- primIO $ mysqlQuery client q
+  fetchMany client query limit = do
+    ?fetchMany_rhs
+
+  fetchAll client query = do
+    Right () <- primIO $ mysqlQuery client query
         | Left err => pure $ Left err
     Right (resultCount ** result) <- primIO $ mysqlStoreResult client
         | Left err => pure $ Left err
