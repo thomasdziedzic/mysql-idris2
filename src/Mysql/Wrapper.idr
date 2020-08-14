@@ -77,6 +77,15 @@ mysqlNumFields (SomeResults result) = do
     castBits32ToNat x = fromInteger (prim__cast_Bits32Integer x)
 
 export
+mysqlNumRows : HasIO io => Result Many -> io Nat
+mysqlNumRows (SomeResults result) = do
+  rows <- primIO $ mysql_num_rows result
+  pure $ castBits64ToNat rows
+  where
+    castBits64ToNat : Bits64 -> Nat
+    castBits64ToNat x = fromInteger (prim__cast_Bits64Integer x)
+
+export
 mysqlFetchRow : HasIO io => (client : Client Connected) -> Result Many -> io (Either MysqlError (Maybe Row))
 mysqlFetchRow (MkClient mysql) (SomeResults result) = do
   row <- primIO $ mysql_fetch_row result

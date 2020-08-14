@@ -28,6 +28,11 @@ mysql_store_result : AnyPtr -> PrimIO AnyPtr
 export
 mysql_num_fields : AnyPtr -> PrimIO Bits32
 
+-- uint64_t mysql_num_rows(MYSQL_RES *result)
+%foreign (libmysqlclient "mysql_num_rows")
+export
+mysql_num_rows : AnyPtr -> PrimIO Bits64
+
 -- MYSQL_ROW mysql_fetch_row(MYSQL_RES *result)
 %foreign (libmysqlclient "mysql_fetch_row")
 export

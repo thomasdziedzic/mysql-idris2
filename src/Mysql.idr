@@ -86,7 +86,7 @@ Has [PrimIO] e => MysqlI e where
            Right (nRows ** (nCols ** allRows)) <- primIO $ fetchHelper limit nCols client result []
              | Left err => pure $ Left err
            primIO $ mysqlFreeResult result
-           -- we need to reverse the fetchHelper results because it accumulates results using a vector
+           -- we need to reverse the fetchHelper results because it accumulates results in reverse order
            pure $ Right $ Just (nRows ** (nCols ** (reverse allRows)))
 
   fetchAll client query = do
@@ -98,5 +98,10 @@ Has [PrimIO] e => MysqlI e where
          None => do
            pure $ Right Nothing
          Many => do
-           rows <- primIO $ ?fetchAllHelper client result
-           pure $ Right $ Just rows
+           nRows <- primIO $ mysqlNumRows result
+           nCols <- primIO $ mysqlNumFields result
+           Right (nRows ** (nCols ** allRows)) <- primIO $ fetchHelper nRows nCols client result []
+             | Left err => pure $ Left err
+           primIO $ mysqlFreeResult result
+           -- we need to reverse the fetchHelper results because it accumulates results in reverse order
+           pure $ Right $ Just (nRows ** (nCols ** (reverse allRows)))
