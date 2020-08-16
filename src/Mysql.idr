@@ -4,6 +4,7 @@ import Control.App
 
 import public Mysql.Types
 import Mysql.Wrapper
+import Mysql.Helper
 
 import Data.Vect
 
@@ -23,24 +24,6 @@ interface MysqlI e where
   fetchAll : (client : Client Connected) ->
              (query : String) ->
              App e (Either MysqlError (Maybe (nRows ** (nCols ** Vect nRows (Vect nCols String)))))
-
-fetchHelper : HasIO io =>
-              {accRows : Nat} ->
-              (limit : Nat) ->
-              (nCols : Nat) ->
-              (client : Client Connected) ->
-              (result : Result Many) ->
-              (acc : Vect accRows (Vect nCols String)) ->
-              io (Either MysqlError (nRows ** (nCols ** (Vect nRows (Vect nCols String)))))
-fetchHelper {accRows} 0 nCols client result acc = pure $ Right (accRows ** (nCols ** acc))
-fetchHelper {accRows} (S k) nCols client result acc = do
-  Right mRow <- mysqlFetchRow client result
-    | Left err => pure $ Left err
-  case mRow of
-       Nothing => pure $ Right (accRows ** (nCols ** acc))
-       Just row => do
-         fetchedRow <- fetchOneRow nCols row
-         fetchHelper k nCols client result (fetchedRow :: acc)
 
 export
 Has [PrimIO] e => MysqlI e where
