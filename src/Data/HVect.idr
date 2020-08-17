@@ -1,6 +1,7 @@
 module Data.HVect
 
 import Decidable.Equality
+import Data.List
 import public Data.Vect
 import Data.Vect.Elem
 
@@ -99,20 +100,20 @@ public export
     decEq (x :: xs) (y :: ys) | No contra = No (contra . hvectInjective1)
 
 public export
-interface Shows (ts : Vect k Type) where
+interface Shows (k : Nat) (ts : Vect k Type) where
   shows : HVect ts -> Vect k String
 
 public export
-Shows [] where
+Shows Z [] where
   shows [] = []
 
-{- TODO figure out error
 public export
-(Show t, Shows ts) => Shows (t :: ts) where
+(Show t, Shows len ts) => Shows (S len) (t :: ts) where
   shows (x :: xs) = show x :: shows xs
--}
 
--- TODO https://github.com/idris-lang/Idris-dev/blob/master/libs/base/Data/HVect.idr#L71-L72
+public export
+(Shows len ts) => Show (HVect ts) where
+  show xs = "[" ++ (pack . intercalate [','] . map unpack . toList $ shows xs) ++ "]"
 
 ||| Extract an arbitrary element of the correct type.
 ||| @ t the goal type
