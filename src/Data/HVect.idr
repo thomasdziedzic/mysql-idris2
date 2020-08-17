@@ -32,11 +32,10 @@ index (FS j) (x :: xs) = index j xs
 ||| ["string"]
 ||| ```
 public export
-deleteAt : {l : Nat} -> {ts : Vect (S l) Type} -> (1 i : Fin (S l)) -> HVect ts -> HVect (deleteAt i ts)
-deleteAt FZ (x :: xs@(_ :: _)) = xs
-deleteAt {l = S m} (FS j) (x :: xs@(_ :: _)) = x :: deleteAt j xs -- x :: deleteAt j xs
-deleteAt {l = Z} (FS j) (x :: xs) = absurd j
-deleteAt _ [] impossible
+deleteAt : (1 i : Fin (S l)) -> HVect ts -> HVect (deleteAt i ts)
+deleteAt FZ (x :: xs) = xs
+deleteAt (FS n) [x] = absurd n
+deleteAt (FS n) (x :: xs@(_::_)) = x :: deleteAt n xs
 
 ||| Replace an element in an HVect.
 |||
@@ -80,12 +79,12 @@ public export
   (x :: xs) == (y :: ys) = x == y && xs == ys
 
 public export
-hvectInjective1 : {xs, ys: HVect ts} -> {x, y: a} -> x :: xs = y :: ys -> x = y
-hvectInjective1 Refl = Refl
+consInjective1 : {xs, ys: HVect ts} -> {x, y: a} -> x :: xs = y :: ys -> x = y
+consInjective1 Refl = Refl
 
 public export
-hvectInjective2 : {xs, ys: HVect ts} -> {x, y: a} -> x :: xs = y :: ys -> xs = ys
-hvectInjective2 Refl = Refl
+consInjective2 : {xs, ys: HVect ts} -> {x, y: a} -> x :: xs = y :: ys -> xs = ys
+consInjective2 Refl = Refl
 
 public export
 DecEq (HVect []) where
@@ -96,8 +95,8 @@ public export
   decEq (x :: xs) (y :: ys) with (decEq x y)
     decEq (z :: xs) (z :: ys) | Yes Refl with (decEq xs ys)
       decEq (z :: zs) (z :: zs) | Yes Refl | Yes Refl = Yes Refl
-      decEq (z :: xs) (z :: ys) | Yes Refl | No contra = No (contra . hvectInjective2)
-    decEq (x :: xs) (y :: ys) | No contra = No (contra . hvectInjective1)
+      decEq (z :: xs) (z :: ys) | Yes Refl | No contra = No (contra . consInjective2)
+    decEq (x :: xs) (y :: ys) | No contra = No (contra . consInjective1)
 
 public export
 interface Shows (k : Nat) (ts : Vect k Type) where
@@ -118,18 +117,18 @@ public export
 ||| Extract an arbitrary element of the correct type.
 ||| @ t the goal type
 public export
-get : HVect ts -> {auto p : Elem t ts} -> t
+get : HVect ts -> {auto 1 p : Elem t ts} -> t
 get (x :: xs) {p = Here} = x
-get (x :: xs) {p = (There p')} = get {p = p'} xs
+get (x :: xs) {p = (There p')} = get xs
 
 ||| Replace an element with the correct type.
 public export
-put : t -> HVect ts -> {auto p : Elem t ts} -> HVect ts
+put : t -> HVect ts -> {auto 1 p : Elem t ts} -> HVect ts
 put y (x :: xs) {p = Here} = y :: xs
-put y (x :: xs) {p = (There p')} = x :: put {p = p'} y xs
+put y (x :: xs) {p = (There p')} = x :: put y xs
 
 ||| Update an element with the correct type.
 public export
-update : (t -> u) -> HVect ts -> {auto p : Elem t ts} -> HVect (replaceByElem ts p u)
+update : (t -> u) -> HVect ts -> {auto 1 p : Elem t ts} -> HVect (replaceByElem ts p u)
 update f (x :: xs) {p = Here} = f x :: xs
-update f (x :: xs) {p = (There p')} = x :: update {p = p'} f xs
+update f (x :: xs) {p = (There p')} = x :: update f xs
