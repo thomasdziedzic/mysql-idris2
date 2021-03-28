@@ -1,2 +1,4 @@
 *.idr~
 build
+*.o
+*.so
