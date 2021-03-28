@@ -3,7 +3,6 @@ package mysql
 sourcedir = "src"
 
 modules =
-    Data.HVect,
     Mysql,
     Mysql.Bindings,
     Support.Bindings
